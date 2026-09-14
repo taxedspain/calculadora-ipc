@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora IRPF 2025 — Inflación y poder adquisitivo en España</title>
+    <meta name="description" content="Calculadora del IRPF 2025 en España: cuánto tiene que subir tu salario bruto para que el neto no pierda poder adquisitivo frente al IPC. Escalas estatal, autonómicas y forales del ejercicio 2025.">
+    <meta name="color-scheme" content="light">
+    <meta property="og:title" content="Calculadora IRPF 2025 — Inflación y poder adquisitivo">
+    <meta property="og:description" content="Cuánto tiene que subir tu bruto para que el neto siga el IPC. Datos del ejercicio 2025.">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Work+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --color-primary: #1a4d2e;
+            --color-secondary: #4f772d;
+            --color-accent: #90a955;
+            --color-light: #ecf39e;
+            --color-bg: #faf9f6;
+            --color-text: #2c3e20;
+            --color-border: #d4d9c7;
+            --color-warn: #b45309;
+            --color-warn-bg: #fff8e1;
+        }
+
+        body {
+            font-family: 'Work Sans', system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--color-bg) 0%, #f5f3ed 100%);
+            color: var(--color-text);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid var(--color-primary);
+        }
+
+        h1 {
+            font-family: 'Libre Baskerville', Georgia, serif;
+            font-size: 2.4rem;
+            color: var(--color-primary);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .subtitle { font-size: 1.05rem; color: var(--color-secondary); font-weight: 300; }
+
+        .badge {
+            display: inline-block;
+            margin-top: 1rem;
+            padding: 0.3rem 0.9rem;
+            background: var(--color-light);
+            color: var(--color-primary);
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .explanation {
+            background: linear-gradient(135deg, var(--color-light) 0%, #e8f4c1 100%);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border-left: 4px solid var(--color-accent);
+        }
+
+        .explanation p { margin-bottom: 0.75rem; line-height: 1.8; }
+        .explanation p:last-child { margin-bottom: 0; }
+        .explanation strong { color: var(--color-primary); font-weight: 600; }
+
+        .panel {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: var(--color-primary);
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        select, input[type="number"] {
+            width: 100%;
+            padding: 0.7rem;
+            font-size: 1rem;
+            border: 2px solid var(--color-border);
+            border-radius: 6px;
+            background: white;
+            color: var(--color-text);
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+
+        select { cursor: pointer; }
+        select:hover { border-color: var(--color-accent); }
+
+        select:focus-visible, input:focus-visible, button:focus-visible {
+            outline: 3px solid var(--color-secondary);
+            outline-offset: 2px;
+        }
+
+        select:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 0 3px rgba(79, 119, 45, 0.12);
+        }
+
+        .field-help { font-size: 0.8rem; color: var(--color-secondary); margin-top: 0.35rem; }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: linear-gradient(to right, var(--color-light) 0%, var(--color-accent) 100%);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0.75rem 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            background: var(--color-primary);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider-value {
+            display: inline-block;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            background: var(--color-light);
+            padding: 0.35rem 1.2rem;
+            border-radius: 8px;
+        }
+
+        .presets { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem; }
+
+        .preset {
+            padding: 0.35rem 0.8rem;
+            font-size: 0.82rem;
+            font-family: inherit;
+            border: 1px solid var(--color-border);
+            border-radius: 999px;
+            background: white;
+            color: var(--color-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .preset:hover { background: var(--color-light); border-color: var(--color-accent); }
+        .preset[aria-pressed="true"] { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+
+        .chart-title {
+            font-family: 'Libre Baskerville', Georgia, serif;
+            font-size: 1.35rem;
+            color: var(--color-primary);
+            margin-bottom: 0.4rem;
+            font-weight: 700;
+        }
+
+        .chart-note { font-size: 0.88rem; color: var(--color-secondary); margin-bottom: 1.25rem; }
+
+        .chart-wrapper { position: relative; height: 400px; width: 100%; }
+        .chart-wrapper.tall { height: 520px; }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s ease, transform 0.15s ease;
+        }
+
+        .btn:hover { background: var(--color-secondary); transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
+
+        .results {
+            display: none;
+            background: linear-gradient(135deg, var(--color-light) 0%, #e8f4c1 100%);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--color-secondary);
+            margin-top: 1.5rem;
+        }
+
+        .results.visible { display: block; }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .metric-label { font-size: 0.85rem; color: var(--color-secondary); margin-bottom: 0.15rem; }
+        .metric-value { font-size: 1.45rem; font-weight: 700; color: var(--color-primary); line-height: 1.25; }
+
+        .verdict {
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid rgba(26, 77, 46, 0.2);
+            font-size: 0.95rem;
+        }
+
+        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 640px; }
+        caption { text-align: left; font-size: 0.88rem; color: var(--color-secondary); padding-bottom: 0.75rem; }
+        th, td { padding: 0.6rem 0.75rem; text-align: right; border-bottom: 1px solid var(--color-border); }
+        th { color: var(--color-primary); font-weight: 600; font-size: 0.82rem; }
+        th:first-child, td:first-child { text-align: left; }
+        tbody tr:hover { background: rgba(236, 243, 158, 0.35); }
+        td.highlight { color: var(--color-warn); font-weight: 600; }
+
+        .info-box {
+            background: linear-gradient(135deg, var(--color-warn-bg) 0%, #fff3cd 100%);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #f4a261;
+            margin-bottom: 2rem;
+        }
+
+        .info-box h3 { color: #d97826; margin-bottom: 0.75rem; font-size: 1.15rem; }
+        .info-box p { color: #7d5a2a; line-height: 1.8; }
+
+        .data-list { list-style: none; }
+        .data-list li { padding: 0.55rem 0; border-bottom: 1px dashed var(--color-border); font-size: 0.92rem; }
+        .data-list li:last-child { border-bottom: none; }
+        .data-list strong { color: var(--color-primary); }
+
+        details summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--color-primary);
+            padding: 0.5rem 0;
+        }
+
+        details[open] summary { margin-bottom: 0.75rem; }
+
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding: 2rem 1rem;
+            color: var(--color-secondary);
+            font-size: 0.88rem;
+        }
+
+        footer a { color: var(--color-secondary); }
+
+        .fallback {
+            display: none;
+            padding: 1rem;
+            background: var(--color-warn-bg);
+            border-left: 4px solid #f4a261;
+            border-radius: 6px;
+            color: #7d5a2a;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 1rem 0.75rem; }
+            h1 { font-size: 1.7rem; }
+            .panel { padding: 1.25rem; }
+            header { padding: 1.5rem; }
+            .chart-wrapper { height: 340px; }
+            .chart-wrapper.tall { height: 480px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { transition: none !important; animation: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Calculadora IRPF 2025</h1>
+            <p class="subtitle">Cuánto tiene que subir tu salario bruto para que el neto no pierda poder adquisitivo</p>
+            <span class="badge">Ejercicio fiscal 2025 · declaración presentada en 2026</span>
+        </header>
+
+        <section class="explanation">
+            <p><strong>El problema.</strong> Si los precios suben un 2,7% y tu sueldo bruto sube ese mismo 2,7%, tu poder adquisitivo baja. El IRPF es progresivo: cada euro adicional tributa a un tipo marginal más alto que el tipo medio que ya pagabas, así que el neto crece menos que el bruto.</p>
+            <p><strong>Lo que calcula esta herramienta.</strong> Para cada nivel de renta, la subida bruta necesaria para que el <em>neto</em> crezca exactamente lo mismo que el IPC que elijas. La diferencia entre esa cifra y el IPC es el coste de la progresividad no corregida, lo que suele llamarse «progresividad en frío» o rémora fiscal.</p>
+            <p><strong>Un matiz que suele contarse mal.</strong> El esfuerzo no crece de forma continua con el sueldo. El pico está en el entorno de los 18.000–21.000 € brutos, donde se retiran a la vez la reducción por rendimientos del trabajo y la deducción de los 340 €. Por encima de ese tramo, la subida necesaria se estabiliza en torno al 3–3,5% para un IPC del 2,7%.</p>
+        </section>
+
+        <section class="panel" aria-labelledby="controles-h">
+            <h2 class="chart-title" id="controles-h">Parámetros</h2>
+            <p class="chart-note">Los cálculos suponen un contribuyente soltero, sin hijos ni discapacidad, con rentas exclusivamente del trabajo y sin deducciones autonómicas.</p>
+            <div class="control-grid">
+                <div>
+                    <label for="comunidad">Comunidad autónoma o territorio foral</label>
+                    <select id="comunidad"></select>
+                    <p class="field-help" id="ayudaComunidad"></p>
+                </div>
+                <div>
+                    <label for="regimen">Régimen de cotización</label>
+                    <select id="regimen">
+                        <option value="general">Régimen General (6,48%)</option>
+                        <option value="muface">Clases Pasivas + MUFACE (5,55%)</option>
+                    </select>
+                    <p class="field-help">Los funcionarios que ingresaron desde 2011 están en el Régimen General. El mutualismo administrativo cotiza sobre haberes reguladores, aquí se aproxima como porcentaje del bruto.</p>
+                </div>
+                <div>
+                    <label for="ipc">Inflación de referencia (IPC)</label>
+                    <input type="range" id="ipc" min="0" max="10" value="2.7" step="0.1"
+                           aria-describedby="ipcValor">
+                    <div><span class="slider-value"><span id="ipcValor">2,7</span>%</span></div>
+                    <div class="presets" role="group" aria-label="Valores de IPC de referencia">
+                        <button type="button" class="preset" data-ipc="2.7">Media 2025: 2,7%</button>
+                        <button type="button" class="preset" data-ipc="2.9">Diciembre 2025: 2,9%</button>
+                        <button type="button" class="preset" data-ipc="2.8">Media 2024: 2,8%</button>
+                        <button type="button" class="preset" data-ipc="8.4">Media 2022: 8,4%</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel" aria-labelledby="grafico1-h">
+            <h2 class="chart-title" id="grafico1-h">Subida bruta necesaria según el sueldo</h2>
+            <p class="chart-note">La línea naranja es el IPC elegido. La línea gris es la subida del 2,5% pactada para los empleados públicos en 2025. Todo lo que quede por encima de la naranja es esfuerzo fiscal adicional.</p>
+            <div class="chart-wrapper"><canvas id="graficoSalarios" role="img" aria-label="Gráfico de subida bruta necesaria por nivel salarial"></canvas></div>
+            <p class="fallback" id="fallbackGrafico">No se han podido cargar los gráficos (Chart.js no está disponible). La tabla y la calculadora siguen funcionando.</p>
+        </section>
+
+        <section class="panel" aria-labelledby="calc-h">
+            <h2 class="chart-title" id="calc-h">Tu caso</h2>
+            <p class="chart-note">Introduce tu salario bruto anual, incluidas las pagas extra.</p>
+            <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label for="salarioPersonal">Salario bruto anual (€)</label>
+                    <input type="number" id="salarioPersonal" value="30000" min="8000" max="600000" step="500" inputmode="numeric">
+                </div>
+                <button type="button" class="btn" id="calcularBtn">Calcular</button>
+            </div>
+            <p class="fallback" id="errorSalario" role="alert"></p>
+
+            <div class="results" id="resultado" aria-live="polite">
+                <div class="results-grid">
+                    <div>
+                        <p class="metric-label">Neto actual</p>
+                        <p class="metric-value" id="netoActual">—</p>
+                    </div>
+                    <div>
+                        <p class="metric-label">Tipo efectivo de IRPF</p>
+                        <p class="metric-value" id="tipoEfectivo">—</p>
+                    </div>
+                    <div>
+                        <p class="metric-label">Tipo marginal real</p>
+                        <p class="metric-value" id="tipoMarginal">—</p>
+                    </div>
+                    <div>
+                        <p class="metric-label">Subida bruta necesaria</p>
+                        <p class="metric-value" id="aumentoNecesario">—</p>
+                    </div>
+                    <div>
+                        <p class="metric-label">Bruto que deberías pedir</p>
+                        <p class="metric-value" id="nuevoBruto">—</p>
+                    </div>
+                    <div>
+                        <p class="metric-label">Neto resultante</p>
+                        <p class="metric-value" id="nuevoNeto">—</p>
+                    </div>
+                </div>
+                <p class="verdict" id="veredicto"></p>
+            </div>
+        </section>
+
+        <section class="panel" aria-labelledby="grafico2-h">
+            <h2 class="chart-title" id="grafico2-h">La misma nómina en cada territorio</h2>
+            <p class="chart-note" id="notaComparativa">Subida bruta necesaria en cada comunidad para el salario introducido arriba.</p>
+            <div class="chart-wrapper tall"><canvas id="graficoCCAA" role="img" aria-label="Comparativa de subida necesaria por comunidad autónoma"></canvas></div>
+        </section>
+
+        <section class="panel" aria-labelledby="tabla-h">
+            <h2 class="chart-title" id="tabla-h">Detalle por nivel de renta</h2>
+            <div class="table-scroll">
+                <table>
+                    <caption id="captionTabla"></caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Bruto anual</th>
+                            <th scope="col">Cotización SS</th>
+                            <th scope="col">IRPF</th>
+                            <th scope="col">Neto anual</th>
+                            <th scope="col">Neto mensual (12 pagas)</th>
+                            <th scope="col">Tipo efectivo</th>
+                            <th scope="col">Tipo marginal</th>
+                            <th scope="col">Subida necesaria</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="info-box">
+            <h3>Cómo leer los resultados</h3>
+            <p>El tipo marginal real incluye IRPF y cotización, y en las rentas bajas también la pérdida de reducciones y deducciones. Por eso en la franja de 18.000 a 21.000 € puede superar el 55%: no es un error de cálculo, es el efecto de retirar la reducción del artículo 20 (que cae 1,75 € por cada euro de más) y la deducción de 340 € al mismo tiempo. Ese tramo es el que peor absorbe la inflación de todo el sistema.</p>
+        </section>
+
+        <section class="panel">
+            <details open>
+                <summary>Datos del ejercicio 2025 utilizados</summary>
+                <ul class="data-list">
+                    <li><strong>Escala estatal:</strong> 9,5% / 12% / 15% / 18,5% / 22,5% / 24,5% sobre 12.450, 20.200, 35.200, 60.000 y 300.000 €. Sin cambios respecto a 2024.</li>
+                    <li><strong>Escalas autonómicas:</strong> las 15 comunidades de régimen común vigentes en 2025, con las deflactaciones aplicadas por Madrid, Canarias, Aragón, Galicia y otras.</li>
+                    <li><strong>Territorios forales:</strong> tarifa propia de Navarra (13%–52%) y del País Vasco (23%–49%), que sustituyen por completo a la escala estatal.</li>
+                    <li><strong>Cotización del trabajador:</strong> 6,48% (4,70% contingencias comunes + 1,55% desempleo + 0,10% formación + 0,13% MEI, que sube desde el 0,12% de 2024).</li>
+                    <li><strong>Base máxima de cotización:</strong> 4.909,50 €/mes, 58.914 €/año.</li>
+                    <li><strong>Cuota de solidaridad:</strong> nueva en 2025, sobre el salario que supera la base máxima. A cargo del trabajador: 0,15%, 0,17% y 0,19% según tramo.</li>
+                    <li><strong>Gastos deducibles generales:</strong> 2.000 € (régimen común).</li>
+                    <li><strong>Reducción por rendimientos del trabajo:</strong> 7.302 € hasta 14.852 € de rendimiento neto, decreciente hasta desaparecer en 19.747,50 €.</li>
+                    <li><strong>Mínimo personal:</strong> 5.550 €, aplicado por el método legal de cuota.</li>
+                    <li><strong>Deducción por rendimientos del trabajo (Ley 5/2025):</strong> hasta 340 € para rendimientos íntegros de hasta 16.576 €, decreciente hasta 18.276 €. Con efectos desde el 1 de enero de 2025.</li>
+                    <li><strong>SMI 2025:</strong> 16.576 € anuales en 14 pagas.</li>
+                    <li><strong>IPC 2025:</strong> media anual 2,7%; tasa interanual de diciembre 2,9%.</li>
+                    <li><strong>Subida retributiva del sector público en 2025:</strong> 2,5% con efectos retroactivos a 1 de enero (Real Decreto-ley 14/2025), dentro del acuerdo 2025–2028.</li>
+                </ul>
+            </details>
+        </section>
+
+        <footer>
+            <p>Calculadora educativa sobre el IRPF español y el efecto de la inflación · Ejercicio 2025</p>
+            <p style="margin-top: 0.5rem;">Estimación simplificada: no contempla situación familiar, discapacidad, deducciones autonómicas, planes de pensiones ni rentas del ahorro. Los resultados de Navarra y País Vasco son orientativos, porque sus sistemas forales incluyen deducciones no recogidas aquí. No sustituye al asesoramiento fiscal profesional.</p>
+            <p style="margin-top: 0.5rem;">
+                <a href="https://github.com/taxedspain/calculadora-ipc" target="_blank" rel="noopener noreferrer">
+                Ver el código fuente de este proyecto
+                </a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        /* ============================================================
+           DATOS FISCALES — EJERCICIO 2025
+           ============================================================ */
+
+        var ESCALA_ESTATAL = [
+            [12450, 0.095], [20200, 0.12], [35200, 0.15],
+            [60000, 0.185], [300000, 0.225], [Infinity, 0.245]
+        ];
+
+        // r: 'comun' suma escala estatal + autonómica. 'navarra' y 'paisvasco' usan tarifa foral única.
+        var TERRITORIOS = {
+            madrid: { n: 'Comunidad de Madrid', r: 'comun', e: [[13362.22, 0.085], [19004.63, 0.107], [35425.68, 0.128], [57320.40, 0.174], [Infinity, 0.205]] },
+            andalucia: { n: 'Andalucía', r: 'comun', e: [[13000, 0.095], [21000, 0.12], [35200, 0.15], [60000, 0.185], [Infinity, 0.225]] },
+            aragon: { n: 'Aragón', r: 'comun', e: [[13972.5, 0.095], [21210, 0.12], [36960, 0.15], [52500, 0.185], [60000, 0.205], [80000, 0.23], [90000, 0.24], [130000, 0.25], [Infinity, 0.255]] },
+            asturias: { n: 'Principado de Asturias', r: 'comun', e: [[12450, 0.09], [17707.2, 0.12], [33007.2, 0.14], [53407.2, 0.192], [70000, 0.215], [90000, 0.225], [175000, 0.25], [Infinity, 0.26]] },
+            baleares: { n: 'Illes Balears', r: 'comun', e: [[10000, 0.09], [18000, 0.1125], [30000, 0.1425], [48000, 0.175], [70000, 0.19], [90000, 0.2175], [120000, 0.2275], [175000, 0.2375], [Infinity, 0.2475]] },
+            canarias: { n: 'Canarias', r: 'comun', e: [[13465, 0.09], [19022, 0.115], [35185, 0.14], [56382, 0.185], [91350, 0.235], [121200, 0.25], [Infinity, 0.26]] },
+            cantabria: { n: 'Cantabria', r: 'comun', e: [[13000, 0.085], [21000, 0.11], [35200, 0.145], [60000, 0.18], [90000, 0.225], [Infinity, 0.245]] },
+            castillalamancha: { n: 'Castilla-La Mancha', r: 'comun', e: [[12450, 0.095], [20200, 0.12], [35200, 0.15], [60000, 0.185], [Infinity, 0.225]] },
+            castillaleon: { n: 'Castilla y León', r: 'comun', e: [[12450, 0.09], [20200, 0.12], [35200, 0.14], [53407.2, 0.185], [Infinity, 0.215]] },
+            cataluna: { n: 'Cataluña', r: 'comun', e: [[12500, 0.095], [22000, 0.125], [33000, 0.16], [53000, 0.19], [90000, 0.215], [120000, 0.235], [175000, 0.245], [Infinity, 0.255]] },
+            extremadura: { n: 'Extremadura', r: 'comun', e: [[12450, 0.08], [20200, 0.10], [24200, 0.16], [35200, 0.175], [60000, 0.21], [80200, 0.235], [99200, 0.24], [120200, 0.245], [Infinity, 0.25]] },
+            galicia: { n: 'Galicia', r: 'comun', e: [[12985.34, 0.09], [21068.27, 0.1165], [35200, 0.149], [47600, 0.184], [Infinity, 0.225]] },
+            murcia: { n: 'Región de Murcia', r: 'comun', e: [[12450, 0.095], [20200, 0.112], [34000, 0.133], [60000, 0.179], [Infinity, 0.225]] },
+            rioja: { n: 'La Rioja', r: 'comun', e: [[12450, 0.08], [20200, 0.106], [35200, 0.136], [40000, 0.178], [50000, 0.183], [60000, 0.19], [120000, 0.245], [Infinity, 0.27]] },
+            valencia: { n: 'Comunitat Valenciana', r: 'comun', e: [[12000, 0.09], [22000, 0.12], [32000, 0.15], [42000, 0.175], [52000, 0.20], [62000, 0.225], [72000, 0.25], [100000, 0.265], [150000, 0.275], [200000, 0.285], [Infinity, 0.295]] },
+            navarra: { n: 'Navarra', r: 'navarra', e: [[4458, 0.13], [10030, 0.22], [21175, 0.25], [35663, 0.28], [51266, 0.365], [66869, 0.415], [89159, 0.44], [139310, 0.47], [195034, 0.49], [334344, 0.505], [Infinity, 0.52]] },
+            paisvasco: { n: 'País Vasco', r: 'paisvasco', e: [[17720, 0.23], [35440, 0.28], [53160, 0.35], [75910, 0.40], [105130, 0.45], [140130, 0.46], [204270, 0.47], [Infinity, 0.49]] }
+        };
+
+        var SS = {
+            baseMaxAnual: 58914,
+            tipoTrabajador: 0.0648,
+            tipoMutualismo: 0.0555,
+            solidaridad: [[64805.40, 0.0015], [88371, 0.0017], [Infinity, 0.0019]]
+        };
+
+        var GASTOS_GENERALES = 2000;
+        var MINIMO_PERSONAL = 5550;
+        var SMI = 16576;
+        var SUBIDA_PACTADA = 2.5;
+
+        /* ============================================================
+           MOTOR DE CÁLCULO
+           ============================================================ */
+
+        function cuotaEscala(base, escala) {
+            var cuota = 0, anterior = 0;
+            for (var i = 0; i < escala.length; i++) {
+                if (base <= anterior) break;
+                cuota += (Math.min(base, escala[i][0]) - anterior) * escala[i][1];
+                anterior = escala[i][0];
+            }
+            return cuota;
+        }
+
+        function cotizacion(bruto, regimen) {
+            if (regimen === 'muface') return bruto * SS.tipoMutualismo;
+            var cuota = Math.min(bruto, SS.baseMaxAnual) * SS.tipoTrabajador;
+            if (bruto > SS.baseMaxAnual) {
+                var anterior = SS.baseMaxAnual;
+                for (var i = 0; i < SS.solidaridad.length; i++) {
+                    if (bruto <= anterior) break;
+                    cuota += (Math.min(bruto, SS.solidaridad[i][0]) - anterior) * SS.solidaridad[i][1];
+                    anterior = SS.solidaridad[i][0];
+                }
+            }
+            return cuota;
+        }
+
+        // Artículo 20 LIRPF, redacción del RDL 4/2024, vigente en 2025
+        function reduccionTrabajo(rendimientoNeto) {
+            if (rendimientoNeto <= 14852) return 7302;
+            if (rendimientoNeto <= 17673.52) return 7302 - 1.75 * (rendimientoNeto - 14852);
+            if (rendimientoNeto < 19747.5) return 2364.34 - 1.14 * (rendimientoNeto - 17673.52);
+            return 0;
+        }
+
+        // Deducción por obtención de rendimientos del trabajo, Ley 5/2025
+        function deduccionRentasBajas(rendimientoIntegro) {
+            if (rendimientoIntegro <= SMI) return 340;
+            if (rendimientoIntegro < 18276) return 340 - 0.2 * (rendimientoIntegro - SMI);
+            return 0;
+        }
+
+        // Bonificación del trabajo, referencia Bizkaia 2025
+        function bonificacionPaisVasco(rendimientoNeto) {
+            if (rendimientoNeto <= 14800) return 8000;
+            if (rendimientoNeto <= 23000) return 8000 - ((8000 - 3000) / (23000 - 14800)) * (rendimientoNeto - 14800);
+            return 3000;
+        }
+
+        // Deducción por trabajo del artículo 62.5 del TRIRPF navarro
+        function deduccionTrabajoNavarra(rendimientoNeto) {
+            if (rendimientoNeto <= 10500) return 1400;
+            if (rendimientoNeto <= 17500) return 1400 - 0.10 * (rendimientoNeto - 10500);
+            if (rendimientoNeto <= 35000) return 700;
+            if (rendimientoNeto <= 50000) return 700 - 0.02 * (rendimientoNeto - 35000);
+            return 400;
+        }
+
+        function calcular(bruto, clave, regimen) {
+            var t = TERRITORIOS[clave];
+            var ss = cotizacion(bruto, regimen);
+            var irpf, baseLiquidable, rn;
+
+            if (t.r === 'comun') {
+                rn = Math.max(0, bruto - ss - GASTOS_GENERALES);
+                baseLiquidable = Math.max(0, rn - Math.min(reduccionTrabajo(rn), rn));
+                var minimo = Math.min(MINIMO_PERSONAL, baseLiquidable);
+                var cuotaIntegra =
+                    (cuotaEscala(baseLiquidable, ESCALA_ESTATAL) - cuotaEscala(minimo, ESCALA_ESTATAL)) +
+                    (cuotaEscala(baseLiquidable, t.e) - cuotaEscala(minimo, t.e));
+                irpf = Math.max(0, cuotaIntegra - deduccionRentasBajas(bruto));
+            } else if (t.r === 'paisvasco') {
+                rn = Math.max(0, bruto - ss);
+                baseLiquidable = Math.max(0, rn - bonificacionPaisVasco(rn));
+                irpf = Math.max(0, cuotaEscala(baseLiquidable, t.e) - 1583);
+            } else {
+                rn = Math.max(0, bruto - ss);
+                baseLiquidable = rn;
+                irpf = Math.max(0, cuotaEscala(baseLiquidable, t.e) - 1084 - deduccionTrabajoNavarra(rn));
+            }
+
+            return {
+                bruto: bruto,
+                ss: ss,
+                irpf: irpf,
+                neto: bruto - ss - irpf,
+                tipoEfectivo: bruto > 0 ? (irpf / bruto) * 100 : 0
+            };
+        }
+
+        function neto(bruto, clave, regimen) {
+            return calcular(bruto, clave, regimen).neto;
+        }
+
+        function tipoMarginal(bruto, clave, regimen) {
+            var paso = 100;
+            return (1 - (neto(bruto + paso, clave, regimen) - neto(bruto, clave, regimen)) / paso) * 100;
+        }
+
+        // Bisección: subida bruta que hace crecer el neto exactamente el IPC
+        function aumentoNecesario(bruto, ipc, clave, regimen) {
+            if (bruto <= 0) return 0;
+            var objetivo = neto(bruto, clave, regimen) * (1 + ipc / 100);
+            var lo = 0, hi = 0.5;
+            while (neto(bruto * (1 + hi), clave, regimen) < objetivo && hi < 50) hi *= 2;
+            for (var i = 0; i < 60; i++) {
+                var mid = (lo + hi) / 2;
+                if (neto(bruto * (1 + mid), clave, regimen) < objetivo) lo = mid; else hi = mid;
+            }
+            return ((lo + hi) / 2) * 100;
+        }
+
+        /* ============================================================
+           FORMATO Y UTILIDADES
+           ============================================================ */
+
+        var eur = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+        var num = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        var num1 = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+        function pct(v) { return num.format(v) + '%'; }
+        function $(id) { return document.getElementById(id); }
+
+        var SALARIOS = [16576, 20000, 25000, 30000, 35000, 40000, 45000, 50000, 60000, 70000, 85000, 100000];
+
+        /* ============================================================
+           ESTADO E INTERFAZ
+           ============================================================ */
+
+        var graficoSalarios = null;
+        var graficoCCAA = null;
+        var hayChart = false;
+
+        function estado() {
+            return {
+                ipc: parseFloat($('ipc').value),
+                comunidad: $('comunidad').value,
+                regimen: $('regimen').value,
+                salario: parseFloat($('salarioPersonal').value)
+            };
+        }
+
+        function poblarComunidades() {
+            var sel = $('comunidad');
+            var claves = Object.keys(TERRITORIOS).sort(function (a, b) {
+                return TERRITORIOS[a].n.localeCompare(TERRITORIOS[b].n, 'es');
+            });
+            claves.forEach(function (k) {
+                var opt = document.createElement('option');
+                opt.value = k;
+                opt.textContent = TERRITORIOS[k].n + (TERRITORIOS[k].r !== 'comun' ? ' (foral)' : '');
+                sel.appendChild(opt);
+            });
+            sel.value = 'madrid';
+        }
+
+        function actualizarAyudaComunidad() {
+            var t = TERRITORIOS[estado().comunidad];
+            $('ayudaComunidad').textContent = t.r === 'comun'
+                ? 'Escala estatal más escala autonómica de 2025.'
+                : 'Régimen foral con tarifa propia. Estimación orientativa: no incluye todas las deducciones forales.';
+        }
+
+        var opcionesBase = {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { labels: { font: { size: 13, family: 'Work Sans' }, color: '#2c3e20', padding: 14, boxWidth: 14 } },
+                tooltip: {
+                    backgroundColor: 'rgba(255,255,255,0.97)',
+                    titleColor: '#1a4d2e',
+                    bodyColor: '#2c3e20',
+                    borderColor: '#90a955',
+                    borderWidth: 1,
+                    padding: 12
+                }
+            }
+        };
+
+        function pintarGraficoSalarios(st) {
+            if (!hayChart) return;
+            var datos = SALARIOS.map(function (s) { return aumentoNecesario(s, st.ipc, st.comunidad, st.regimen); });
+            var ctx = $('graficoSalarios').getContext('2d');
+            if (graficoSalarios) graficoSalarios.destroy();
+
+            graficoSalarios = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: SALARIOS.map(function (s) { return (s / 1000).toFixed(0) + 'k€'; }),
+                    datasets: [
+                        {
+                            label: 'Subida bruta necesaria',
+                            data: datos,
+                            borderColor: '#1a4d2e',
+                            backgroundColor: 'rgba(26,77,46,0.10)',
+                            borderWidth: 3, fill: true, tension: 0.35,
+                            pointRadius: 4, pointHoverRadius: 7,
+                            pointBackgroundColor: '#1a4d2e', pointBorderColor: '#fff', pointBorderWidth: 2
+                        },
+                        {
+                            label: 'IPC de referencia (' + num1.format(st.ipc) + '%)',
+                            data: SALARIOS.map(function () { return st.ipc; }),
+                            borderColor: '#f4a261', borderWidth: 2, borderDash: [6, 4],
+                            fill: false, pointRadius: 0
+                        },
+                        {
+                            label: 'Subida pactada sector público 2025 (2,5%)',
+                            data: SALARIOS.map(function () { return SUBIDA_PACTADA; }),
+                            borderColor: '#8a8a8a', borderWidth: 2, borderDash: [2, 3],
+                            fill: false, pointRadius: 0
+                        }
+                    ]
+                },
+                options: Object.assign({}, opcionesBase, {
+                    plugins: Object.assign({}, opcionesBase.plugins, {
+                        tooltip: Object.assign({}, opcionesBase.plugins.tooltip, {
+                            callbacks: {
+                                title: function (items) { return eur.format(SALARIOS[items[0].dataIndex]) + ' brutos'; },
+                                label: function (c) { return c.dataset.label + ': ' + pct(c.parsed.y); }
+                            }
+                        })
+                    }),
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Salario bruto anual', font: { size: 13, weight: 600 }, color: '#1a4d2e' },
+                            ticks: { color: '#4f772d', font: { size: 11 } },
+                            grid: { display: false }
+                        },
+                        y: {
+                            title: { display: true, text: 'Subida necesaria (%)', font: { size: 13, weight: 600 }, color: '#1a4d2e' },
+                            ticks: { color: '#4f772d', callback: function (v) { return num1.format(v) + '%'; } },
+                            grid: { color: 'rgba(144,169,85,0.15)' }
+                        }
+                    }
+                })
+            });
+        }
+
+        function pintarGraficoCCAA(st) {
+            if (!hayChart) return;
+            var salario = isFinite(st.salario) && st.salario > 0 ? st.salario : 30000;
+            var filas = Object.keys(TERRITORIOS).map(function (k) {
+                return { k: k, n: TERRITORIOS[k].n, v: aumentoNecesario(salario, st.ipc, k, st.regimen) };
+            }).sort(function (a, b) { return a.v - b.v; });
+
+            $('notaComparativa').textContent =
+                'Subida bruta necesaria sobre ' + eur.format(salario) + ' para que el neto crezca un ' +
+                num1.format(st.ipc) + '%. Ordenado de menor a mayor esfuerzo.';
+
+            var ctx = $('graficoCCAA').getContext('2d');
+            if (graficoCCAA) graficoCCAA.destroy();
+
+            graficoCCAA = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: filas.map(function (f) { return f.n; }),
+                    datasets: [{
+                        label: 'Subida bruta necesaria',
+                        data: filas.map(function (f) { return f.v; }),
+                        backgroundColor: filas.map(function (f) {
+                            return f.k === st.comunidad ? '#1a4d2e' : 'rgba(144,169,85,0.75)';
+                        }),
+                        borderRadius: 4
+                    }]
+                },
+                options: Object.assign({}, opcionesBase, {
+                    indexAxis: 'y',
+                    plugins: Object.assign({}, opcionesBase.plugins, {
+                        legend: { display: false },
+                        tooltip: Object.assign({}, opcionesBase.plugins.tooltip, {
+                            callbacks: { label: function (c) { return pct(c.parsed.x); } }
+                        })
+                    }),
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Subida necesaria (%)', font: { size: 13, weight: 600 }, color: '#1a4d2e' },
+                            ticks: { color: '#4f772d', callback: function (v) { return num1.format(v) + '%'; } },
+                            grid: { color: 'rgba(144,169,85,0.15)' }
+                        },
+                        y: { ticks: { color: '#4f772d', font: { size: 11 } }, grid: { display: false } }
+                    }
+                })
+            });
+        }
+
+        function pintarTabla(st) {
+            var cuerpo = $('cuerpoTabla');
+            cuerpo.innerHTML = '';
+            $('captionTabla').textContent =
+                TERRITORIOS[st.comunidad].n + ' · IPC de referencia ' + num1.format(st.ipc) + '% · ejercicio 2025';
+
+            SALARIOS.forEach(function (s) {
+                var c = calcular(s, st.comunidad, st.regimen);
+                var marg = tipoMarginal(s, st.comunidad, st.regimen);
+                var nec = aumentoNecesario(s, st.ipc, st.comunidad, st.regimen);
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<th scope="row" style="text-align:left;font-weight:600">' + eur.format(s) + '</th>' +
+                    '<td>' + eur.format(c.ss) + '</td>' +
+                    '<td>' + eur.format(c.irpf) + '</td>' +
+                    '<td>' + eur.format(c.neto) + '</td>' +
+                    '<td>' + eur.format(c.neto / 12) + '</td>' +
+                    '<td>' + pct(c.tipoEfectivo) + '</td>' +
+                    '<td' + (marg > 50 ? ' class="highlight"' : '') + '>' + pct(marg) + '</td>' +
+                    '<td' + (nec > st.ipc * 1.25 ? ' class="highlight"' : '') + '>' + pct(nec) + '</td>';
+                cuerpo.appendChild(tr);
+            });
+        }
+
+        function calcularCasoPersonal() {
+            var st = estado();
+            var error = $('errorSalario');
+
+            if (!isFinite(st.salario) || st.salario < 8000 || st.salario > 600000) {
+                error.textContent = 'Introduce un salario bruto anual entre 8.000 € y 600.000 €.';
+                error.style.display = 'block';
+                $('resultado').classList.remove('visible');
+                return;
+            }
+            error.style.display = 'none';
+
+            var actual = calcular(st.salario, st.comunidad, st.regimen);
+            var subida = aumentoNecesario(st.salario, st.ipc, st.comunidad, st.regimen);
+            var nuevoBruto = st.salario * (1 + subida / 100);
+            var nuevoNeto = neto(nuevoBruto, st.comunidad, st.regimen);
+
+            $('netoActual').textContent = eur.format(actual.neto);
+            $('tipoEfectivo').textContent = pct(actual.tipoEfectivo);
+            $('tipoMarginal').textContent = pct(tipoMarginal(st.salario, st.comunidad, st.regimen));
+            $('aumentoNecesario').textContent = pct(subida);
+            $('nuevoBruto').textContent = eur.format(nuevoBruto);
+            $('nuevoNeto').textContent = eur.format(nuevoNeto);
+
+            // Qué pasa con la subida pactada del 2,5%
+            var netoConPactada = neto(st.salario * (1 + SUBIDA_PACTADA / 100), st.comunidad, st.regimen);
+            var crecimientoNeto = (netoConPactada / actual.neto - 1) * 100;
+            var brecha = crecimientoNeto - st.ipc;
+            var euros = actual.neto * (brecha / 100);
+
+            var texto = 'Con la subida del 2,5% pactada para 2025, tu neto crecería un ' + pct(crecimientoNeto) +
+                ', frente a un IPC del ' + num1.format(st.ipc) + '%. ';
+            texto += brecha < -0.02
+                ? 'Son ' + pct(Math.abs(brecha)) + ' de poder adquisitivo perdido, unos ' + eur.format(Math.abs(euros)) + ' al año en términos reales.'
+                : (brecha > 0.02
+                    ? 'Ganarías ' + pct(brecha) + ' de poder adquisitivo real.'
+                    : 'Mantendrías el poder adquisitivo prácticamente intacto.');
+
+            $('veredicto').textContent = texto;
+            $('resultado').classList.add('visible');
+        }
+
+        function refrescar() {
+            var st = estado();
+            $('ipcValor').textContent = num1.format(st.ipc);
+            actualizarAyudaComunidad();
+
+            document.querySelectorAll('.preset').forEach(function (b) {
+                b.setAttribute('aria-pressed', String(parseFloat(b.dataset.ipc) === st.ipc));
+            });
+
+            pintarGraficoSalarios(st);
+            pintarGraficoCCAA(st);
+            pintarTabla(st);
+            if ($('resultado').classList.contains('visible')) calcularCasoPersonal();
+        }
+
+        /* ============================================================
+           ARRANQUE
+           ============================================================ */
+
+        function iniciar() {
+            hayChart = typeof window.Chart !== 'undefined';
+            if (!hayChart) $('fallbackGrafico').style.display = 'block';
+
+            poblarComunidades();
+
+            $('ipc').addEventListener('input', refrescar);
+            $('comunidad').addEventListener('change', refrescar);
+            $('regimen').addEventListener('change', refrescar);
+            $('calcularBtn').addEventListener('click', calcularCasoPersonal);
+            $('salarioPersonal').addEventListener('change', function () {
+                if ($('resultado').classList.contains('visible')) calcularCasoPersonal();
+                pintarGraficoCCAA(estado());
+            });
+            $('salarioPersonal').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); calcularCasoPersonal(); }
+            });
+
+            document.querySelectorAll('.preset').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    $('ipc').value = b.dataset.ipc;
+                    refrescar();
+                });
+            });
+
+            refrescar();
+            calcularCasoPersonal();
+        }
+
+        // Chart.js se carga con defer, por lo que ya está disponible en DOMContentLoaded
+        if (document.readyState === 'loading') {
+            window.addEventListener('DOMContentLoaded', iniciar);
+        } else {
+            iniciar();
+        }
+    })();
+    </script>
+</body>
+</html>
